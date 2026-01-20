@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cotizaciones KAMC</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 480px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 6px 0; }
+    button { background: black; color: white; border: none; }
+    .box { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Login KAMC</h2>
+
+<input id="usuario" placeholder="Usuario">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="login()">Ingresar</button>
+
+<p id="msg" style="color:red"></p>
+
+<hr>
+
+<h3>Cotización</h3>
+
+<input id="cliente" placeholder="Cliente">
+<input id="ruc" placeholder="RUC">
+
+<div class="box">
+  <input id="precio" type="number" placeholder="Precio Unitario (S/ m²)">
+  <input id="m2" type="number" placeholder="m² x Caja">
+  <input id="paletas" type="number" placeholder="Paletas">
+  <input id="cajas" type="number" placeholder="Cajas x Paleta">
+</div>
+
+<button onclick="guardar()">Guardar Cotización</button>
+
+<p id="ok" style="color:green"></p>
+
+<script>
+const API = "https://backend-kamc.onrender.com";
+
+let usuario_id = null;
+
+function login() {
+  const u = usuario.value;
+  const p = password.value;
+
+  fetch(`${API}/login?usuario=${u}&password=${p}`, { method: "POST" })
+    .then(r => r.json())
+    .then(d => {
+      if (d.usuario_id) {
+        usuario_id = d.usuario_id;
+        msg.innerText = "Login correcto";
+      } else {
+        msg.innerText = "Error de login";
+      }
+    });
+}
+
+function guardar() {
+  const total = (paletas.value * cajas.value * m2.value * precio.value) || 0;
+  const igv = total * 0.18;
+
+  fetch(`${API}/cotizacion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      numero: "COT-" + Date.now(),
+      usuario_id: usuario_id,
+      cliente: cliente.value,
+      cliente_ruc: ruc.value,
+      forma_pago: "CONTADO",
+      validez: "10 días",
+      plazo_entrega: "Según stock",
+      lugar_entrega: "Almacén",
+      valor_venta: total,
+      igv: igv,
+      total: total + igv
+    })
+  })
+  .then(r => r.json())
+  .then(() => ok.innerText = "Cotización guardada correctamente");
+}
+</script>
+
+</body>
+</html>
